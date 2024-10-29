@@ -38,12 +38,30 @@ export const deleteMovie = createAsyncThunk(
   }
 );
 
+export const EditMovie = createAsyncThunk(
+  "UPDATE/Movie",
+  async (data, { dispatch }) => {
+    console.log(`UPDATE/Movie`);
+    const response = await fetch(`http://localhost:5500/api/v1/MoviesUpdates`, {
+      method: "POST",
+      body: JSON.stringify(data),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    const dataRes = await response.json();
+    dispatch(updatedDataSYNC(data));
+    return dataRes.newData;
+  }
+);
+
 const MovieSlice = createSlice({
   name: "MovieSlice",
   initialState: {
     Movies: [],
     error: null,
     status: "idle", // loading , successfull , error
+    Edit: null,
   },
   reducers: {
     addMovieSYNC: (state, action) => {
@@ -51,6 +69,19 @@ const MovieSlice = createSlice({
     },
     deleteMovieSYNC: (state, action) => {
       state.Movies = state.Movies.filter((ele) => ele._id != action.payload);
+    },
+    setEditData: (state, action) => {
+      state.Edit = action.payload;
+    },
+    updatedDataSYNC: (state, action) => {
+      state.Movies = state.Movies((ele) => {
+        if (ele._id == action.payload._id) {
+          return action.payload;
+        } else {
+          return ele;
+        }
+      });
+      state.Edit = null;
     },
   },
   extraReducers: (builder) => {
@@ -91,9 +122,21 @@ const MovieSlice = createSlice({
         state.status = "error";
         state.error = action.error;
       });
+
+    builder
+      .addCase(EditMovie.pending, (state) => {
+        state.status = "loading";
+      })
+      .addCase(EditMovie.fulfilled, (state) => {
+        state.status = "successfull";
+      })
+      .addCase(EditMovie.rejected, (state, action) => {
+        state.status = "error";
+      });
   },
 });
 
-export const { addMovieSYNC, deleteMovieSYNC } = MovieSlice.actions;
+export const { addMovieSYNC, deleteMovieSYNC, setEditData, updatedDataSYNC } =
+  MovieSlice.actions;
 
 export default MovieSlice;

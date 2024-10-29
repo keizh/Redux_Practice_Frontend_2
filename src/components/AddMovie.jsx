@@ -6,9 +6,9 @@ import {
   Typography,
 } from "@material-tailwind/react";
 import { useState, useEffect } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { z } from "zod";
-import { addMovies } from "../features/MovieSlice/MovieSlice";
+import { addMovies, EditMovie } from "../features/MovieSlice/MovieSlice";
 const movieSchema = z.object({
   name: z.string(),
   producer: z.string(),
@@ -22,6 +22,7 @@ export function AddMovie() {
     producer: "",
     genre: "",
   };
+  const { Edit } = useSelector((state) => state.Movies);
   const [data, setData] = useState(initialData);
 
   const changeHandler = (e) => {
@@ -29,10 +30,20 @@ export function AddMovie() {
     setData((data) => ({ ...data, [name]: value }));
   };
 
+  useEffect(() => {
+    if (Edit != null) {
+      setData(Edit);
+    }
+  }, [Edit]);
+
   const submitHandler = (e) => {
     e.preventDefault();
     if (movieSchema.safeParse(data).success == true) {
-      dispatch(addMovies(data));
+      if (Edit == null) {
+        dispatch(addMovies(data));
+      } else {
+        dispatch(EditMovie(data));
+      }
       setData(initialData);
     }
   };
